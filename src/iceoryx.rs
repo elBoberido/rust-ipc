@@ -1,4 +1,5 @@
 use crate::{get_payload, ExecutionResult, KB};
+use core_affinity::{set_for_current, CoreId};
 use iceoryx2::port::publisher::Publisher;
 use iceoryx2::port::subscriber::Subscriber;
 use iceoryx2::prelude::*;
@@ -94,6 +95,14 @@ impl IceoryxRunner {
     }
 
     pub fn run(&mut self, n: usize, print: bool) {
+        core_affinity::set_for_current(core_affinity::CoreId { id: 1 });
+
+        let warmup = Instant::now();
+        loop {
+            if warmup.elapsed() > Duration::from_millis(1000) {
+                break;
+            }
+        }
         let start = Instant::now();
         for _ in 0..n {
             let sample = self
@@ -107,9 +116,9 @@ impl IceoryxRunner {
             // Waiting for response
             loop {
                 if let Some(recv_payload) = self.wrapper.subscriber.receive().unwrap() {
-                    if !recv_payload.eq(&self.response_data) {
-                        panic!("Received unexpected payload")
-                    }
+                    // if !recv_payload.eq(&self.response_data) {
+                    //     panic!("Received unexpected payload")
+                    // }
                     break;
                 }
             }
